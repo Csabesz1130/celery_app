@@ -3,28 +3,33 @@ import logging
 from celery import Celery
 from celery.schedules import crontab
 from datetime import datetime
-from .models import Session, TaskResult
+from .models import db, TaskResult
+from flask import Flask
 
 app = Celery('celery_app')
 app.config_from_object('celery_app.celeryconfig')
 logger = logging.getLogger(__name__)
 
+# Flask alkalmazás létrehozása a Celery worker számára
+flask_app = Flask(__name__)
+flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
+flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(flask_app)
+
 def save_task_result(task_name, status, result=None, error_message=None):
-    session = Session()
-    try:
-        task_result = TaskResult(
-            task_name=task_name,
-            status=status,
-            result=str(result) if result else None,
-            error_message=str(error_message) if error_message else None
-        )
-        session.add(task_result)
-        session.commit()
-    except Exception as e:
-        logger.error(f"Error saving task result: {str(e)}")
-        session.rollback()
-    finally:
-        session.close()
+    with flask_app.app_context():
+        try:
+            task_result = TaskResult(
+                task_name=task_name,
+                status=status,
+                result=str(result) if result else None,
+                error_message=str(error_message) if error_message else None
+            )
+            db.session.add(task_result)
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"Error saving task result: {str(e)}")
+            db.session.rollback()
 
 @app.task(bind=True)
 def task_a(self):

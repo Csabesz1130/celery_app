@@ -1,24 +1,17 @@
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from flask_sqlalchemy import SQLAlchemy
 
-Base = declarative_base()
+db = SQLAlchemy()
 
-class TaskResult(Base):
+class TaskResult(db.Model):
     __tablename__ = 'task_results'
     
-    id = Column(Integer, primary_key=True)
-    task_name = Column(String(50), nullable=False)
-    status = Column(String(20), nullable=False)  # 'success' or 'failure'
-    result = Column(String(255))
-    error_message = Column(String(255))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    task_name = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), nullable=False)  # 'success' or 'failure'
+    result = db.Column(db.String(255))
+    error_message = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f"<TaskResult(task_name='{self.task_name}', status='{self.status}')>"
-
-# Adatbázis kapcsolat létrehozása
-engine = create_engine('sqlite:///tasks.db')
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine) 
+        return f"<TaskResult(task_name='{self.task_name}', status='{self.status}')>" 
