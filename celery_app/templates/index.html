@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celery Feladat Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .card {
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .success-rate {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .failure {
+            color: #dc3545;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="text-center mb-5">Celery Feladat Monitor</h1>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Task A</h5>
+                        <div class="success-rate" id="task-a-rate">-</div>
+                        <p class="text-muted">Sikerességi arány</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Task B</h5>
+                        <div class="success-rate" id="task-b-rate">-</div>
+                        <p class="text-muted">Sikerességi arány</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Task C</h5>
+                        <div class="success-rate" id="task-c-rate">-</div>
+                        <p class="text-muted">Sikerességi arány</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container mb-4">
+            <div id="chart"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Legutóbbi feladatok</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Feladat</th>
+                                <th>Állapot</th>
+                                <th>Eredmény</th>
+                                <th>Időpont</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-tasks">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateStats() {
+            fetch('/api/task_stats')
+                .then(response => response.json())
+                .then(data => {
+                    // Sikerességi arányok frissítése
+                    Object.entries(data.success_rates).forEach(([task, rate]) => {
+                        const element = document.getElementById(`task-${task}-rate`);
+                        element.textContent = `${rate}%`;
+                        element.className = `success-rate ${rate >= 50 ? 'success' : 'failure'}`;
+                    });
+
+                    // Grafikon frissítése
+                    if (data.chart_data) {
+                        Plotly.newPlot('chart', data.chart_data.data, data.chart_data.layout);
+                    }
+                });
+
+            fetch('/api/recent_tasks')
+                .then(response => response.json())
+                .then(tasks => {
+                    const tbody = document.getElementById('recent-tasks');
+                    tbody.innerHTML = tasks.map(task => `
+                        <tr>
+                            <td>${task.task_name}</td>
+                            <td><span class="badge ${task.status === 'success' ? 'bg-success' : 'bg-danger'}">${task.status}</span></td>
+                            <td>${task.result || task.error_message || '-'}</td>
+                            <td>${new Date(task.created_at).toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                });
+        }
+
+        // Frissítés minden 5 másodpercben
+        updateStats();
+        setInterval(updateStats, 5000);
+    </script>
+</body>
+
+</html>
