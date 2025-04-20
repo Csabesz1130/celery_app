@@ -5,6 +5,7 @@ from celery.schedules import crontab
 from datetime import datetime
 from .models import db, TaskResult
 from flask import Flask
+import os
 
 app = Celery('celery_app')
 app.config_from_object('celery_app.celeryconfig')
@@ -15,6 +16,10 @@ flask_app = Flask(__name__)
 flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
 flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(flask_app)
+
+# Adatbázis létrehozása, ha még nem létezik
+with flask_app.app_context():
+    db.create_all()
 
 def save_task_result(task_name, status, result=None, error_message=None):
     with flask_app.app_context():

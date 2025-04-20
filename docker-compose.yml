@@ -8,41 +8,44 @@ services:
     volumes:
       - redis_data:/data
 
-  celery_worker:
-    build: .
-    command: celery -A celery_app.tasks worker --loglevel=info
-    volumes:
-      - .:/app
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - redis
-
-  celery_beat:
-    build: .
-    command: celery -A celery_app.tasks beat --loglevel=info
-    volumes:
-      - .:/app
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - redis
-
   web:
     build: .
-    command: python -m celery_app.web
+    command: sh -c "python -m celery_app.web && sleep 5"
     ports:
       - "5000:5000"
     volumes:
       - .:/app
+      - db_data:/app
     environment:
       - FLASK_ENV=development
     depends_on:
       - redis
-      - celery_worker
-      - celery_beat
+
+  celery_worker:
+    build: .
+    command: sh -c "sleep 10 && celery -A celery_app.tasks worker --loglevel=info"
+    volumes:
+      - .:/app
+      - db_data:/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
+
+  celery_beat:
+    build: .
+    command: sh -c "sleep 10 && celery -A celery_app.tasks beat --loglevel=info"
+    volumes:
+      - .:/app
+      - db_data:/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
 
   prometheus:
     image: prom/prometheus:v2.45.0
@@ -55,6 +58,7 @@ services:
 
   celery_exporter:
     image: danihodovic/celery-exporter:latest
+    command: --broker-url=redis://redis:6379/0 --enable-events
     ports:
       - "9808:9808"
     environment:
@@ -62,5 +66,16 @@ services:
     depends_on:
       - redis
 
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+
 volumes:
   redis_data:
+  db_data:
