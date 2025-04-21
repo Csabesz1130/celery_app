@@ -10,7 +10,7 @@ services:
 
   web:
     build: .
-    command: sh -c "python -m celery_app.web && sleep 5"
+    command: python -m celery_app.wsgi
     ports:
       - "5000:5000"
     volumes:
@@ -18,7 +18,7 @@ services:
       - db_data:/app
     environment:
       - FLASK_ENV=development
-      - FLASK_APP=celery_app.web
+      - FLASK_RUN_HOST=0.0.0.0
     depends_on:
       - redis
 
