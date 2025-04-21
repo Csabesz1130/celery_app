@@ -10,15 +10,15 @@ services:
 
   web:
     build: .
-    command: python -m celery_app.wsgi
+    command: flask --app celery_app.web run --host=0.0.0.0 --port=5000
     ports:
       - "5000:5000"
     volumes:
       - .:/app
       - db_data:/app
     environment:
-      - FLASK_ENV=development
-      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_APP=celery_app.web
+      - FLASK_DEBUG=1
     depends_on:
       - redis
 
@@ -59,7 +59,7 @@ services:
 
   celery_exporter:
     image: danihodovic/celery-exporter:latest
-    command: --broker-url=redis://redis:6379/0 --enable-events
+    command: --broker-url=redis://redis:6379/0
     ports:
       - "9808:9808"
     environment:
