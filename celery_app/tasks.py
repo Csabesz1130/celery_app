@@ -11,7 +11,7 @@ app = Celery('celery_app')
 app.config_from_object('celery_app.celeryconfig')
 logger = logging.getLogger(__name__)
 
-# Flask alkalmazás létrehozása a Celery worker számára
+# Flask alkalmazás A CW-nek
 flask_app = Flask(__name__)
 flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
 flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
