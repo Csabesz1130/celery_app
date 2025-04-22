@@ -1,4 +1,3 @@
-# celery_app/wsgi.py
 from celery_app.web import app
 
 if __name__ == "__main__":

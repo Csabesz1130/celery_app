@@ -17,7 +17,6 @@ flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
 flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(flask_app)
 
-# Adatbázis létrehozása, ha még nem létezik
 with flask_app.app_context():
     db.create_all()
 

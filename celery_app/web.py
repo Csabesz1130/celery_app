@@ -24,11 +24,9 @@ def index():
 @app.route('/api/task_stats')
 def task_stats():
     try:
-        # Utolsó 24 óra adatai
         last_24h = datetime.utcnow() - timedelta(hours=24)
         results = TaskResult.query.filter(TaskResult.created_at >= last_24h).all()
         
-        # Átalakítás DataFrame-be
         df = pd.DataFrame([{
             'task_name': r.task_name,
             'status': r.status,
@@ -36,12 +34,12 @@ def task_stats():
         } for r in results])
         
         if not df.empty:
-            # Sikerességi arányok
+            
             success_rates = df.groupby('task_name')['status'].apply(
                 lambda x: (x == 'success').mean() * 100
             ).round(2).to_dict()
             
-            # Időbeli trend
+            
             df['hour'] = df['created_at'].dt.hour
             hourly_stats = df.groupby(['task_name', 'hour', 'status']).size().unstack(fill_value=0)
             hourly_stats = hourly_stats.reset_index()

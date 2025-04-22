@@ -91,7 +91,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "celery_tasks_total",
+                    "expr": "celery_task_sent_total",
                     "refId": "A"
                 }
             ],
@@ -181,7 +181,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "celery_tasks_running",
+                    "expr": "celery_worker_tasks_active",
                     "refId": "A"
                 }
             ],
